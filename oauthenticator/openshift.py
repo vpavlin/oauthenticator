@@ -18,11 +18,12 @@ from jupyterhub.auth import LocalAuthenticator
 
 from .oauth2 import OAuthLoginHandler, OAuthenticator
 
-OPENSHIFT_URL = os.environ.get('OPENSHIFT_URL') or 'https://localhost:8443'
+OPENSHIFT_AUTH_URL = os.environ.get('OPENSHIFT_URL') or 'https://localhost:8443'
+OPENSHIFT_API_URL = "https://openshift.default.svc.cluster.local"
 
 class OpenShiftMixin(OAuth2Mixin):
-    _OAUTH_AUTHORIZE_URL = "%s/oauth/authorize" % OPENSHIFT_URL
-    _OAUTH_ACCESS_TOKEN_URL = "%s/oauth/token" % OPENSHIFT_URL
+    _OAUTH_AUTHORIZE_URL = "%s/oauth/authorize" % OPENSHIFT_AUTH_URL
+    _OAUTH_ACCESS_TOKEN_URL = "%s/oauth/token" % OPENSHIFT_AUTH_URL
 
 
 class OpenShiftLoginHandler(OAuthLoginHandler, OpenShiftMixin):
@@ -58,7 +59,7 @@ class OpenShiftOAuthenticator(OAuthenticator):
             code=code
         )
 
-        url = url_concat("%s/oauth/token" % OPENSHIFT_URL, params)
+        url = url_concat("%s/oauth/token" % OPENSHIFT_AUTH_URL, params)
 
         req = HTTPRequest(url,
                           method="POST",
@@ -79,7 +80,7 @@ class OpenShiftOAuthenticator(OAuthenticator):
                  "Authorization": "Bearer {}".format(access_token)
         }
 
-        req = HTTPRequest("%s/oapi/v1/users/~" % OPENSHIFT_URL,
+        req = HTTPRequest("%s/apis/user.openshift.io/v1/users/~" % OPENSHIFT_API_URL,
                           method="GET",
                           validate_cert=False,
                           headers=headers)
